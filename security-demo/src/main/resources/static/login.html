@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Spring Security Demo - Login</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 480px; margin: 40px auto; }
+  fieldset { margin-bottom: 16px; }
+  label { display: block; margin-top: 8px; }
+  input[type=text], input[type=password] { width: 100%; padding: 6px; box-sizing: border-box; }
+  button { margin-top: 12px; padding: 8px 14px; cursor: pointer; }
+  pre { background: #f4f4f4; padding: 12px; white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+  <h1>Spring Security REST Demo</h1>
+
+  <fieldset>
+    <legend>Login</legend>
+    <label for="username">Username</label>
+    <input id="username" type="text" value="user">
+    <label for="password">Password</label>
+    <input id="password" type="password" value="password">
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn">Logout</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>Call API</legend>
+    <button id="publicBtn">GET /api/public/hello</button>
+    <button id="profileBtn">GET /api/user/profile</button>
+    <button id="adminBtn">GET /api/admin/data</button>
+  </fieldset>
+
+  <h3>Response</h3>
+  <pre id="output">(nothing yet)</pre>
+
+  <script>
+    const output = document.getElementById('output');
+
+    function show(data) {
+      output.textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function getCsrf() {
+      const res = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
+      return res.json();
+    }
+
+    async function callApi(url) {
+      const res = await fetch(url, { credentials: 'same-origin' });
+      let body;
+      try { body = await res.json(); } catch (e) { body = { status: res.status }; }
+      show(body);
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const csrf = await getCsrf();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      const form = new URLSearchParams();
+      form.set('username', username);
+      form.set('password', password);
+
+      const res = await fetch('/login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          [csrf.headerName]: csrf.token
+        },
+        body: form.toString()
+      });
+      show(await res.json());
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const csrf = await getCsrf();
+      const res = await fetch('/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { [csrf.headerName]: csrf.token }
+      });
+      show(await res.json());
+    });
+
+    document.getElementById('publicBtn').addEventListener('click', () => callApi('/api/public/hello'));
+    document.getElementById('profileBtn').addEventListener('click', () => callApi('/api/user/profile'));
+    document.getElementById('adminBtn').addEventListener('click', () => callApi('/api/admin/data'));
+  </script>
+</body>
+</html>
