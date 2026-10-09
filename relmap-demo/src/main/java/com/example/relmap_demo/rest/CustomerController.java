@@ -8,16 +8,17 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.relmap_demo.daos.CustomerRepository;
 import com.example.relmap_demo.models.Customer;
+import com.example.relmap_demo.services.CustomerService;
 
 @RestController 
 @RequestMapping("/api/customers")
 public class CustomerController {
     
     @Autowired 
-    private CustomerRepository repository;
+    private CustomerService service;
 
     @GetMapping
     public List<Customer> findAll(){
-        return repository.findAll();
+        return service.loadAll();
     }
 }
